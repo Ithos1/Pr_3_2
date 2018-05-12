@@ -1,0 +1,19 @@
+{
+  "name": "pr_3_2",
+  "version": "1.0.0",
+  "description": "Second project for Programming 3",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ithos1/Pr_3_2.git"
+  },
+  "author": "Ithos1",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Ithos1/Pr_3_2/issues"
+  },
+  "homepage": "https://github.com/Ithos1/Pr_3_2#readme"
+}
