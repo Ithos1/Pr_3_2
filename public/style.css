@@ -29,7 +29,9 @@ body{
     overflow: auto;
 }
 #chat_1_text{
-    height: 90%;
+    height: 300px;
+    max-height: 400px;
+    overflow: auto;
     font-size: inherit;
 }
 #chat_1_send{
@@ -43,6 +45,12 @@ body{
     color:inherit;
     border: 0.5px dotted red;
     font-size: inherit;
+}
+#submit{
+    width: 60px;
+    height: 20px;
+    color: inherit;
+    background-color: inherit;
 }
 
 #chat_2{

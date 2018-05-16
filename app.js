@@ -2,6 +2,7 @@ var express = require('express');
 var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
+var messages =[];
 
 //Server
 app.use(express.static("./public"));
@@ -15,6 +16,10 @@ server.listen(3000, function(){
 });
 
 io.on('connection', function(socket){
-    
+    io.sockets.emit("display message start", messages);
+    socket.on("send message", function (data){
+        messages.push(data);
+        io.sockets.emit("display message", data);
+    });
     }
 );
