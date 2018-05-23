@@ -33,6 +33,7 @@ body{
     max-height: 400px;
     overflow: auto;
     font-size: inherit;
+    padding: 5px;
 }
 #chat_1_send{
     width: 90%;
@@ -67,14 +68,18 @@ body{
 }
 
 #chat_2_text{
-    height: 400px;
+    height: 300px;
+    max-height: 400px;
+    overflow: auto;
     font-size: inherit;
+    padding: 5px;
 }
 
 #Canvas_Holder{
     float:left;
-    width: fit-content;
+    width: 800px;
     margin: auto;
-    height: 70%;
+    overflow: auto;
+    height: 800px;
     padding: 20px 30px 0px 30px;
 }
