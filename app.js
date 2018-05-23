@@ -36,12 +36,12 @@ var Player_Coords = {
 var Constant_Taken_Positions = [
     [0,0],    [32,0],
     [32,0],   [32,32],
+    [0,704],   [32,704],
     [0,736],   [32,736],
-    [0,768],   [32,768],
-    [736,736],  [768,736],
-    [736,768],  [768,768],    
-    [736,0],    [768,32],
-    [768,0],    [736,32],
+    [704,704],  [736,704],
+    [704,736],  [736,736],    
+    [704,0],    [736,32],
+    [736,0],    [704,32],
     [64,64], [64, 704],
     [704,704],[704,64]    
     ];
@@ -49,16 +49,16 @@ var Base_Coords = {
     blue:[  [0,0],    [32,0],
             [0,32],   [32,32]
         ],
-    red:[   [0,736],   [32,736],
-            [0,768],   [32,768]
+    red:[   [0,704],   [32,704],
+            [0,736],   [32,736]
         ],
     yellow:[    
-            [736,736],  [768,736],
-            [736,768],  [768,768]],
+            [704,704],  [736,704],
+            [704,736],  [736,736]],
 
     green:[
-            [736,0],    [768,32],
-            [768,0],    [736,32]
+            [704,0],    [736,32],
+            [736,0],    [704,32]
     ]
 };
 var Obstacle_coords = [];
@@ -71,19 +71,19 @@ var side = 32;
 //Map-setup
 
 function Start(){
-    Obstacle_amount = Random(5, 20);
+    Obstacle_amount = Random(10, 20);
     Max_Gold = Random(2,5);
     while(Obstacle_amount){
-        var x = Random(0,24)*side;
-        var y = Random(0,24)*side;
+        var x = Random(0,23)*side;
+        var y = Random(0,23)*side;
         if(Check_if_Occupied(x,y)){continue;}
         Obstacle_coords.push([x,y]);
         Obstacle_amount--;
     }
-    Player_Coords.blue = [64,64];
-    Player_Coords.red = [64, 704];
-    Player_Coords.yellow = [704,704];
-    Player_Coords.green = [704,64];
+    Player_Coords.blue = [64,64,false];
+    Player_Coords.red = [64, 704,false];
+    Player_Coords.yellow = [704,704,false];
+    Player_Coords.green = [704,64,false];
     for(var i in Users){
             var Temp;
         while(true){
@@ -110,6 +110,7 @@ server.listen(3000, function(){
 
 io.on('connection', function(socket){
     io.sockets.emit("display message start", messages);
+    io.sockets.emit("ReceiveObstacles", Obstacle_coords);
     socket.on("send message", function (data, name){
         if(name){
             var mes = name + " : " + data;
@@ -133,6 +134,19 @@ io.on('connection', function(socket){
         }
     });
     socket.on("Move",function(data){
+        console.log(Player_Coords);
+        New=CheckCollision(data[1], Player_Coords[data[0]][0], Player_Coords[data[0]][0], data[0]);
+        if(typeof(New)==Array){
+            for(var i in Base_Coords[data[0]]){
+                if(Base_Coords[data[0]]==New && Player_Coords[data][2]){
+                    Points[data[0]]++;
+                }
+            }
+        }
+        if(New===true){
+            io.sockets.emit("updatePlayerCoords", Player_Coords);
+        }
+
     });
     }
 );
@@ -156,4 +170,79 @@ function Check_if_Occupied(x,y){
         }
     }
     return false;
+}
+
+function CheckCollision(direction, x, y, color){
+    x+=16;
+    y+=16;
+switch(direction){
+    case "up":
+        for(var i = 0; i<Constant_Taken_Positions.length-4;i++){
+            if (y - Constant_Taken_Positions[i][1]+16 <= side && y - Constant_Taken_Positions[i][1]+16 >= 0) {
+                if (Math.abs(x - Constant_Taken_Positions[i][0]+16) < side) {
+                    return Constant_Taken_Positions[i];
+                }
+            }
+        }
+        for(var i in Obstacle_coords){
+            if (y - Obstacle_coords[i][1]+16 <= side && y - Obstacle_coords[i][1]+16 >= 0) {
+                if (Math.abs(x - Obstacle_coords[i][0]+16) < side) {
+                    return false;
+                }
+            }
+        }
+        Player_Coords[color][1]--;
+        break;  
+    case "down":
+        for(var i = 0; i<Constant_Taken_Positions.length-4;i++){
+            if (Constant_Taken_Positions[i][1]+16 - y <= side && Constant_Taken_Positions[i][1]+16 - y >= 0) {
+                if (Math.abs(x - Constant_Taken_Positions[i][0]+16) < side) {
+                    return Constant_Taken_Positions[i];
+                }
+            }
+        }
+        for(var i in Obstacle_coords){
+            if (Obstacle_coords[i][1]+16 - y <= side && Obstacle_coords[i][1]+16 - y >= 0) {
+                if (Math.abs(x - Obstacle_coords[i][0]+16) < side) {
+                    return false;
+                }
+            }
+        }
+        Player_Coords[color][1]++;
+        break;  
+    case "left":
+        for(var i = 0; i<Constant_Taken_Positions.length-4;i++){
+            if (x - Constant_Taken_Positions[i][0]+16 <= side && x - Constant_Taken_Positions[i][0]+16 >= 0) {
+                if (Math.abs(y - Constant_Taken_Positions[i][1]+16) < side) {
+                    return Constant_Taken_Positions[i];
+                }
+            }
+        }
+        for(var i in Obstacle_coords){
+            if (x - Obstacle_coords[i][0]+16 <= side && x - Obstacle_coords[i][0]+16 >= 0) {
+                if (Math.abs(y - Obstacle_coords[i][1]+16) < side) {
+                    return false;
+                }
+            }
+        }
+        Player_Coords[color][0]--;
+        break;  
+    case "right":
+        for(var i = 0; i<Constant_Taken_Positions.length-4;i++){
+            if (Constant_Taken_Positions[i][0]+16 - x <= side && Constant_Taken_Positions[i][0]+16 - x >= 0) {
+                if (Math.abs(y - Constant_Taken_Positions[i][1]+16) < side) {
+                    return Constant_Taken_Positions[i];
+                }
+            }
+        }
+        for(var i in Obstacle_coords){
+            if (Obstacle_coords[i][0]+16 - x <= side && Obstacle_coords[i][0]+16 - x >= 0) {
+                if (Math.abs(y - Obstacle_coords[i][1]+16) < side) {
+                    return false;
+                }
+            }
+        }
+        Player_Coords[color][1]++;
+    }
+    return true;
 }
