@@ -132,6 +132,8 @@ io.on('connection', function(socket){
             io.sockets.emit("Announce_Player", data);
         }
     });
+    socket.on("Move",function(data){
+    });
     }
 );
 
@@ -140,7 +142,7 @@ io.on('connection', function(socket){
 function Check_if_Occupied(x,y){
     for(var i in Constant_Taken_Positions){
         if(Constant_Taken_Positions[i][0]==x && Constant_Taken_Positions[i][1]==y){
-            return true;
+            return Constant_Taken_Positions[i];
         }
     }
     for( i in Obstacle_coords){
@@ -150,7 +152,7 @@ function Check_if_Occupied(x,y){
     }
     for( i in Gold_coords){
         if(Gold_coords[i][0]==x && Gold_coords[i][1]==y){
-            return true;
+            return Gold_coords[i];
         }
     }
     return false;

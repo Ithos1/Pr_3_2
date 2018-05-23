@@ -1,12 +1,10 @@
+var Color;
+var Coords;
+var socket;
 
 function preload(){ 
 
-    
-
-
-
-
-    var socket = io.connect('http://localhost:3000');
+    socket = io.connect('http://localhost:3000');
     var chatDiv = document.getElementById('chat_1_text');
     var input = document.getElementById('message');
     var S_button = document.getElementById('submit');
@@ -106,5 +104,23 @@ function setup(){
 }
 
 function draw(){
-
+    
+//Controls
+    if (keyIsDown(LEFT_ARROW) || keyIsDown(65)) {
+        socket.emit("Move",[Color, "left"]);
+    }
+    
+    if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) {
+        socket.emit("Move",[Color, "right"]);
+    }
+    
+    if (keyIsDown(UP_ARROW) || keyIsDown(87)) {
+        socket.emit("Move",[Color, "up"]);
+    }
+    
+    if (keyIsDown(DOWN_ARROW) || keyIsDown(83)) {
+        socket.emit("Move",[Color, "down"]);
+    }
 }
+
+
