@@ -26,7 +26,7 @@ var Players = {
     yellow:"",
     green:""
 };
-var Player_Coords = {
+var Player_Info = {
     blue:[],
     red:[],
     yellow:[],
@@ -71,7 +71,7 @@ var Background;
 //Map-setup
 
 function Start(){
-    Obstacle_amount = Random(10, 20);
+    Obstacle_amount = Random(25, 50);
     Max_Gold = Random(1,3);
     Background = Random(1,4);
     while(Obstacle_amount){
@@ -81,10 +81,10 @@ function Start(){
         Obstacle_coords.push([x,y]);
         Obstacle_amount--;
     }
-    Player_Coords.blue = [64,64,false,0,10];
-    Player_Coords.red = [64, 672,false,0,10];
-    Player_Coords.yellow = [672,672,false,0,10];
-    Player_Coords.green = [672,64,false,0,10];
+    Player_Info.blue = [64,64,false,0,10,"left"];
+    Player_Info.red = [64, 672,false,0,10,"left"];
+    Player_Info.yellow = [672,672,false,0,10,"left"];
+    Player_Info.green = [672,64,false,0,10,"left"];
 
     setInterval(function(){ 
         if(Gold_coords.length<Max_Gold){
@@ -100,7 +100,6 @@ function Start(){
 }
 
 
-
 //Server
 app.use(express.static("./public"));
 
@@ -109,12 +108,13 @@ app.get("/", function(req, res){
 });
 
 server.listen(3000, function(){
-   console.log("Example is running on port 3000");
+    Start();
+    console.log("Example is running on port 3000");
 });
 
 io.on('connection', function(socket){
-    Start();
-    io.sockets.emit("updatePlayerCoords", Player_Coords);
+
+    io.sockets.emit("updatePlayerCoords", Player_Info);
     io.sockets.emit("display message start", messages);
     io.sockets.emit("ReceiveObstacles", [Obstacle_coords, Background]);
     socket.on("send message", function (data, name){
@@ -137,33 +137,42 @@ io.on('connection', function(socket){
         else{
             Users.push(data);
             io.sockets.emit("Announce_Player", data);
-            while(true){
-                var A = Random(colors);
-                for(i in Players){
-                    if(Players[A]!=""){
-                        continue;
+                var A = Random(0, colors.length-1);
+                Players[colors[A]] = data;
+                io.sockets.connected[socket.id].emit("GetColor", colors[A]);
+                colors.splice(A,1);
+                console.log(Players, colors);
+            }
+            if(Users.length==4){
+                io.sockets.emit("Start");
+            }
+        }
+    );
+    socket.on("Move",function(data){
+        if(data[0]){
+            if(data[1]=="idle"){
+                if(Player_Info[data[0]][4]<10){
+                    Player_Info[data[0]][4]+=0.05;
+                    io.sockets.emit("updatePlayerCoords", Player_Info);
+                }
+            }
+            else if(Player_Info[data[0]][4]>0){
+                New=CheckCollision(data[1], Player_Info[data[0]][0], Player_Info[data[0]][1], data[0]);
+                if(Array.isArray(New)){
+                    for(var i in Base_Coords[data[0]]){
+                        if((Base_Coords[data[0]][i][0]==New[0]&&Base_Coords[data[0]][i][1]==New[1]) && Player_Info[data[0]][2]){
+                            Player_Info[data[0]][3]++;
+                            Player_Info[data[0]][2]=false;
+                            io.sockets.emit("updatePlayerCoords", Player_Info);
+                            io.sockets.emit("AnnouncePoint",data[0]);
+                        }
                     }
                 }
-                Players[A] = data;
-                io.sockets.connected[socket.id].emit("GetColor", A);
-                break;
-            }
-        }
-    });
-    socket.on("Move",function(data){
-        New=CheckCollision(data[1], Player_Coords[data[0]][0], Player_Coords[data[0]][1], data[0]);
-        if(Array.isArray(New)){
-            for(var i in Base_Coords[data[0]]){
-                if((Base_Coords[data[0]][i][0]==New[0]&&Base_Coords[data[0]][i][1]==New[1]) && Player_Coords[data[0]][2]){
-                    Player_Coords[data[0]][3]++;
-                    Player_Coords[data[0]][2]=false;
-                    io.sockets.emit("updatePlayerCoords", Player_Coords);
-                    io.sockets.emit("AnnouncePoint",data[0]);
+                if(New===true){
+                    Player_Info[data[0]][4]-=0.05;
+                    io.sockets.emit("updatePlayerCoords", Player_Info);
                 }
             }
-        }
-        if(New===true){
-            io.sockets.emit("updatePlayerCoords", Player_Coords);
         }
     });
     socket.on("AskGold",function(){
@@ -193,18 +202,24 @@ switch(direction){
                     return false;
             }
         }
+        for(i in Player_Info){
+            if (i!=color && C_Up([Player_Info[i][0],Player_Info[i][1],x,y])){
+                return false;
+            }
+        }
         for(i in Gold_coords){
             if (C_Up([Gold_coords[i][0],Gold_coords[i][1],x,y])){
-                if(!Player_Coords[color][2]){
+                if(!Player_Info[color][2]){
                     Gold_coords.splice(i,1);
-                    Player_Coords[color][2]=true;
+                    Player_Info[color][2]=true;
                 }
                 else{
                     return false;
                 }
             }
         }
-        Player_Coords[color][1]-=4;
+        Player_Info[color][5]="up";
+        Player_Info[color][1]-=4;
         break;  
     case "down":
         if(y==736){
@@ -220,18 +235,24 @@ switch(direction){
                     return false;
             }
         }
+        for(i in Player_Info){
+            if (i!=color && C_Down([Player_Info[i][0],Player_Info[i][1],x,y])){
+                return false;
+            }
+        }
         for(i in Gold_coords){
             if (C_Down([Gold_coords[i][0],Gold_coords[i][1],x,y])){
-                if(!Player_Coords[color][2]){
+                if(!Player_Info[color][2]){
                     Gold_coords.splice(i,1);
-                    Player_Coords[color][2]=true;
+                    Player_Info[color][2]=true;
                 }
                 else{
                     return false;
                 }
             }
         }
-        Player_Coords[color][1]+=4;
+        Player_Info[color][5]="up";
+        Player_Info[color][1]+=4;
         break;  
     case "left":
         if(x==0){
@@ -247,18 +268,25 @@ switch(direction){
                     return false;
             }
         }
+        for(i in Player_Info){
+            if (i!=color && C_Left([Player_Info[i][0],Player_Info[i][1],x,y])){
+                return false;
+            }
+        }
         for(i in Gold_coords){
             if (C_Left([Gold_coords[i][0],Gold_coords[i][1],x,y])){
-                if(!Player_Coords[color][2]){
+                if(!Player_Info[color][2]){
                     Gold_coords.splice(i,1);
-                    Player_Coords[color][2]=true;
+                    Player_Info[color][2]=true;
                 }
                 else{
                     return false;
                 }
             }
         }
-        Player_Coords[color][0]-=4;
+        Player_Info[color][5]="left";
+        Player_Info[color][0]-=4;
+        
         break;  
     case "right":
         if(x==736){
@@ -274,18 +302,24 @@ switch(direction){
                     return false;
             }
         }
+        for(i in Player_Info){
+            if (i!=color && C_Right([Player_Info[i][0],Player_Info[i][1],x,y])){
+                return false;
+            }
+        }
         for(i in Gold_coords){
             if (C_Right([Gold_coords[i][0],Gold_coords[i][1],x,y])){
-                if(!Player_Coords[color][2]){
+                if(!Player_Info[color][2]){
                     Gold_coords.splice(i,1);
-                    Player_Coords[color][2]=true;
+                    Player_Info[color][2]=true;
                 }
                 else{
                     return false;
                 }
             }
         }
-        Player_Coords[color][0]+=4;
+        Player_Info[color][5]="left";
+        Player_Info[color][0]+=4;
     }
     return true;
 }

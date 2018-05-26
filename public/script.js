@@ -1,13 +1,13 @@
 var Color;
-var Coords;
+var Players_info;
 var socket;
 var Obstacles;
 var images;
 var Gold_Coords;
 var Background;
+var Game_Has_Started = false;
 
 function preload() {
-
     socket = io.connect('http://localhost:3000');
     var chatDiv = document.getElementById('chat_1_text');
     var input = document.getElementById('message');
@@ -78,7 +78,7 @@ function preload() {
     socket.on("ReceiveObstacles", ReceiveObstacles);
 
     function UpdatePlayerCoords(data) {
-        Coords = data;
+        Players_info = data;
     }
 
     socket.on("updatePlayerCoords", UpdatePlayerCoords);
@@ -97,11 +97,21 @@ function preload() {
     function AnnouncePoint(data) {
         var p = document.createElement('p');
         p.setAttribute("class", "message");
-        p.innerText = data + " delievered the cargo and now has " + Coords[data][3] + " points";
+        p.innerText = "<span style='color:"+data+">"+data + "</span> delievered the cargo and now has " + Players_info[data][3] + " points";
         Server_chat.appendChild(p);
     }
 
     socket.on("AnnouncePoint", AnnouncePoint);
+
+    function Start(){
+        Game_Has_Started = true;
+        var p = document.createElement('p');
+        p.setAttribute("class", "message");
+        p.innerText = "You are <span style='color:"+Color+"'>"+Color+"</span>!";
+        Server_chat.appendChild(p);
+    }
+
+    socket.on("Start",Start);
 }
 
 function setup() {
@@ -118,23 +128,17 @@ function setup() {
         B_green: loadImage(x + "camp_green.png"),
         Gold: loadImage(x + "gold.png"),
         Obstacle: loadImage(x + "obstacle_1.png"),
-        Red_Truck_Up: loadImage(x + "player_red_3.png"),
-        Red_Truck_Left: loadImage(x + "player_red_4.png"),
-        Red_Truck_Down: loadImage(x + "player_red_1.png"),
-        Red_Truck_Right: loadImage(x + "player_red_2.png"),
-        Green_Truck_Up: loadImage(x + "player_green_3.png"),
-        Green_Truck_Left: loadImage(x + "player_green_4.png"),
-        Green_Truck_Down: loadImage(x + "player_green_1.png"),
-        Green_Truck_Right: loadImage(x + "player_green_2.png"),
-        Yellow_Truck_Up: loadImage(x + "player_yellow_3.png"),
-        Yellow_Truck_Left: loadImage(x + "player_yellow_4.png"),
-        Yellow_Truck_Down: loadImage(x + "player_yellow_1.png"),
-        Yellow_Truck_Right: loadImage(x + "player_yellow_2.png"),
-        Blue_Truck_Up: loadImage(x + "player_blue_3.png"),
-        Blue_Truck_Left: loadImage(x + "player_blue_4.png"),
-        Blue_Truck_Down: loadImage(x + "player_blue_1.png"),
-        Blue_Truck_Right: loadImage(x + "player_blue_2.png"),
-        Cargo_Gold: loadImage(x + "cargo_gold_2.png")
+        red_Truck_up: loadImage(x + "player_red_3.png"),
+        red_Truck_left: loadImage(x + "player_red_4.png"),
+        green_Truck_up: loadImage(x + "player_green_3.png"),
+        green_Truck_left: loadImage(x + "player_green_4.png"),
+        yellow_Truck_up: loadImage(x + "player_yellow_3.png"),
+        yellow_Truck_left: loadImage(x + "player_yellow_4.png"),
+        blue_Truck_up: loadImage(x + "player_blue_3.png"),
+        blue_Truck_left: loadImage(x + "player_blue_4.png"),
+        Cargo_Gold_left: loadImage(x + "cargo_gold_2.png"),
+        Cargo_Gold_up: loadImage(x+ "cargo_gold_1.png"),
+        Power: loadImage(x+"power.png")
 
 
     };
@@ -147,13 +151,24 @@ function setup() {
     rect(96, 96, 768, 768);
 
 }
-
+var temp;
 function draw() {
 
-    socket.emit("AskGold");
 
+    socket.emit("AskGold");
     background(75, 75, 75);
     rect(96, 96, 768, 768);
+    
+    
+    
+    if(Color){
+        temp=Players_info[Color][4];
+        for (var i = 0; i<temp;i++){
+            image(images.Power, 108+i*48, 48);
+        }
+        image(images.Power, 108+i*48, 48, 32, 32);
+    }
+    
 
     for (var i = 0; i < 24; i++) {
         for (var j = 0; j < 24; j++) {
@@ -176,32 +191,49 @@ function draw() {
         image(images.Obstacle, Obstacles[i][0] + 96, Obstacles[i][1] + 96);
     }
 
-    for (i in Coords) {
-        image(images.Red_Truck_Left, Coords[i][0] + 96, Coords[i][1] + 96);
-        if (Coords[i][2]) {
-            image(images.Cargo_Gold, Coords[i][0] + 96, Coords[i][1] + 84);
+    for (i in Players_info) {
+        temp = i+"_Truck_"+Players_info[i][5];
+        image(images[temp], Players_info[i][0] + 96, Players_info[i][1] + 96);
+        if (Players_info[i][2]) {
+            temp = "Cargo_Gold_"+Players_info[i][5];
+            if(Players_info[i][5]=="left"){
+            image(images[temp], Players_info[i][0] + 96, Players_info[i][1] + 84);
+            }
+            else{
+                image(images[temp], Players_info[i][0] + 84, Players_info[i][1] + 96);
+            }
         }
     }
-
+    
     for (i in Gold_Coords) {
         image(images.Gold, Gold_Coords[i][0] + 96, Gold_Coords[i][1] + 96);
     }
 
-    //Controls
-    if (keyIsDown(LEFT_ARROW) || keyIsDown(65)) {
-        socket.emit("Move", [Color, "left"]);
-    }
+    
 
-    if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) {
-        socket.emit("Move", [Color, "right"]);
-    }
+    
+    if(Game_Has_Started){
+        //Controls
+        if (keyIsPressed){
+            if (keyIsDown(LEFT_ARROW) || keyIsDown(65)) {
+                socket.emit("Move", [Color, "left"]);
+            }
 
-    if (keyIsDown(UP_ARROW) || keyIsDown(87)) {
-        socket.emit("Move", [Color, "up"]);
-    }
+            if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) {
+                socket.emit("Move", [Color, "right"]);
+            }
 
-    if (keyIsDown(DOWN_ARROW) || keyIsDown(83)) {
-        socket.emit("Move", [Color, "down"]);
+            if (keyIsDown(UP_ARROW) || keyIsDown(87)) {
+                socket.emit("Move", [Color, "up"]);
+            }
+
+            if (keyIsDown(DOWN_ARROW) || keyIsDown(83)) {
+                socket.emit("Move", [Color, "down"]);
+            }
+        }
+        else{
+            socket.emit("Move", [Color, "idle"]);
+        }
     }
 }
 
