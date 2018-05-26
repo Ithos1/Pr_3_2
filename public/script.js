@@ -78,7 +78,12 @@ function preload(){
     }
 
     socket.on("updatePlayerCoords", UpdatePlayerCoords);
-        
+
+    function GetColor (data){
+        Color = data;
+    }
+       
+    socket.on("GetColor", GetColor);
 }
 
 function setup(){
@@ -123,9 +128,10 @@ function setup(){
 
 function draw(){
 
-    for(var i in Coords){
-        image(images.Red_Truck_Left,Coords[0],Coords[1]);
-    }
+    background(75,75,75);
+    rect(96,96,768,768);
+
+    
     
 
     for(var i = 0;i<24;i++){
@@ -146,22 +152,30 @@ function draw(){
     for(var i in Obstacles){
         image(images.Obstacle, Obstacles[i][0]+96,Obstacles[i][1]+96);
     }
+
+    for(var i in Coords){
+        image(images.Red_Truck_Left, Coords[i][0]+96, Coords[i][1]+96);
+    }
     
 //Controls
     if (keyIsDown(LEFT_ARROW) || keyIsDown(65)) {
         socket.emit("Move",[Color, "left"]);
+        console.log("left");
     }
     
     if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) {
         socket.emit("Move",[Color, "right"]);
+        console.log("right");
     }
     
     if (keyIsDown(UP_ARROW) || keyIsDown(87)) {
         socket.emit("Move",[Color, "up"]);
+        console.log("up");
     }
     
     if (keyIsDown(DOWN_ARROW) || keyIsDown(83)) {
         socket.emit("Move",[Color, "down"]);
+        console.log("down");
     }
 }
 
