@@ -19,8 +19,8 @@ Collis_D:function(coords){
         var obstacleX = coords[0];
         var obstacleY = coords[1];
     
-        var playerOX = coords[3] + 16;
-        var playerOY = coords[4] + 16;
+        var playerOX = coords[2] + 16;
+        var playerOY = coords[3] + 16;
     
         var objectOX = obstacleX + 16;
         var objectOY = obstacleY + 16;
@@ -37,8 +37,8 @@ Collis_U:function(coords){
         var obstacleX = coords[0];
         var obstacleY = coords[1];
     
-        var playerOX = coords[3] + 16;
-        var playerOY = coords[4] + 16;
+        var playerOX = coords[2] + 16;
+        var playerOY = coords[3] + 16;
     
         var objectOX = obstacleX + 16;
         var objectOY = obstacleY + 16;
@@ -55,8 +55,8 @@ Collis_L:function(coords){
     var obstacleX = coords[0];
     var obstacleY = coords[1];
 
-    var playerOX = coords[3] + 16;
-    var playerOY = coords[4] + 16;
+    var playerOX = coords[2] + 16;
+    var playerOY = coords[3] + 16;
 
     var objectOX = obstacleX + 16;
     var objectOY = obstacleY + 16;
@@ -73,8 +73,8 @@ Collis_R:function(coords){
     var obstacleX = coords[0];
     var obstacleY = coords[1];
 
-    var playerOX = coords[3] + 16;
-    var playerOY = coords[4] + 16;
+    var playerOX = coords[2] + 16;
+    var playerOY = coords[3] + 16;
 
     var objectOX = obstacleX + 16;
     var objectOY = obstacleY + 16;

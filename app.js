@@ -20,12 +20,6 @@ var Taken;
 
 //Game variables
 
-var Points = {
-    blue:0,
-    red:0,
-    yellow:0,
-    green:0
-};
 var Players = {
     blue:"",
     red:"",
@@ -77,7 +71,7 @@ var side = 32;
 
 function Start(){
     Obstacle_amount = Random(10, 20);
-    Max_Gold = Random(2,5);
+    Max_Gold = Random(1,3);
     while(Obstacle_amount){
         var x = Random(0,23)*side;
         var y = Random(0,23)*side;
@@ -85,13 +79,25 @@ function Start(){
         Obstacle_coords.push([x,y]);
         Obstacle_amount--;
     }
-    Player_Coords.blue = [64,64,false];
-    Player_Coords.red = [64, 672,false];
-    Player_Coords.yellow = [672,672,false];
-    Player_Coords.green = [672,64,false];
+    Player_Coords.blue = [64,64,false,0];
+    Player_Coords.red = [64, 672,false,0];
+    Player_Coords.yellow = [672,672,false,0];
+    Player_Coords.green = [672,64,false,0];
+
+    setInterval(function(){ 
+        if(Gold_coords.length<Max_Gold){
+            while(true){
+                var x = Random(0,23)*side;
+                var y = Random(0,23)*side;
+                if(Check_if_Occupied(x,y)){continue;}
+                Gold_coords.push([x,y]);
+                break;
+            }
+        }
+    }, 5000);
 }
 
-Start();
+
 
 //Server
 app.use(express.static("./public"));
@@ -105,6 +111,7 @@ server.listen(3000, function(){
 });
 
 io.on('connection', function(socket){
+    Start();
     io.sockets.emit("updatePlayerCoords", Player_Coords);
     io.sockets.emit("display message start", messages);
     io.sockets.emit("ReceiveObstacles", Obstacle_coords);
@@ -131,22 +138,26 @@ io.on('connection', function(socket){
             var A = Random(colors);
             Players[A] = data;
             io.sockets.connected[socket.id].emit("GetColor", A);
-            console.log(A, Players);
         }
     });
     socket.on("Move",function(data){
         New=CheckCollision(data[1], Player_Coords[data[0]][0], Player_Coords[data[0]][1], data[0]);
-        if(typeof(New)==Array){
+        if(Array.isArray(New)){
             for(var i in Base_Coords[data[0]]){
-                if(Base_Coords[data[0]]==New && Player_Coords[data][2]){
-                    Points[data[0]]++;
+                if((Base_Coords[data[0]][i][0]==New[0]&&Base_Coords[data[0]][i][1]==New[1]) && Player_Coords[data[0]][2]){
+                    console.log("Yep");
+                    Player_Coords[data[0]][3]++;
+                    Player_Coords[data[0]][2]=false;
+                    io.sockets.emit("AnnouncePoint",data[0]);
                 }
             }
         }
         if(New===true){
             io.sockets.emit("updatePlayerCoords", Player_Coords);
         }
-
+    });
+    socket.on("AskGold",function(){
+        io.sockets.emit("GetGoldCoords",Gold_coords);
     });
     }
 );
@@ -163,13 +174,24 @@ switch(direction){
             return false;
         }
         for(i = 0; i<Constant_Taken_Positions.length-4;i++){
-            if (C_Up(Constant_Taken_Positions[i][0],Constant_Taken_Positions[i][1],x,y)) {
+            if (C_Up([Constant_Taken_Positions[i][0],Constant_Taken_Positions[i][1],x,y])) {
                     return Constant_Taken_Positions[i];
             }
         }
         for(i in Obstacle_coords){
-            if (C_Up(Obstacle_coords[i][0],Obstacle_coords[i][1],x,y)){
+            if (C_Up([Obstacle_coords[i][0],Obstacle_coords[i][1],x,y])){
                     return false;
+            }
+        }
+        for(i in Gold_coords){
+            if (C_Up([Gold_coords[i][0],Gold_coords[i][1],x,y])){
+                if(!Player_Coords[color][2]){
+                    Gold_coords.splice(i,1);
+                    Player_Coords[color][2]=true;
+                }
+                else{
+                    return false;
+                }
             }
         }
         Player_Coords[color][1]-=4;
@@ -179,13 +201,24 @@ switch(direction){
             return false;
         }
         for(i = 0; i<Constant_Taken_Positions.length-4;i++){
-            if (C_Down(Constant_Taken_Positions[i][0],Constant_Taken_Positions[i][1],x,y)) {
+            if (C_Down([Constant_Taken_Positions[i][0],Constant_Taken_Positions[i][1],x,y])) {
                     return Constant_Taken_Positions[i];
             }
         }
         for(i in Obstacle_coords){
-            if (C_Down(Obstacle_coords[i][0],Obstacle_coords[i][1],x,y)){
+            if (C_Down([Obstacle_coords[i][0],Obstacle_coords[i][1],x,y])){
                     return false;
+            }
+        }
+        for(i in Gold_coords){
+            if (C_Down([Gold_coords[i][0],Gold_coords[i][1],x,y])){
+                if(!Player_Coords[color][2]){
+                    Gold_coords.splice(i,1);
+                    Player_Coords[color][2]=true;
+                }
+                else{
+                    return false;
+                }
             }
         }
         Player_Coords[color][1]+=4;
@@ -195,13 +228,24 @@ switch(direction){
             return false;
         }
         for(i = 0; i<Constant_Taken_Positions.length-4;i++){
-            if (C_Left(Constant_Taken_Positions[i][0],Constant_Taken_Positions[i][1],x,y)) {
+            if (C_Left([Constant_Taken_Positions[i][0],Constant_Taken_Positions[i][1],x,y])) {
                     return Constant_Taken_Positions[i];
             }
         }
         for(i in Obstacle_coords){
-            if (C_Left(Obstacle_coords[i][0],Obstacle_coords[i][1],x,y)){
+            if (C_Left([Obstacle_coords[i][0],Obstacle_coords[i][1],x,y])){
                     return false;
+            }
+        }
+        for(i in Gold_coords){
+            if (C_Left([Gold_coords[i][0],Gold_coords[i][1],x,y])){
+                if(!Player_Coords[color][2]){
+                    Gold_coords.splice(i,1);
+                    Player_Coords[color][2]=true;
+                }
+                else{
+                    return false;
+                }
             }
         }
         Player_Coords[color][0]-=4;
@@ -211,13 +255,24 @@ switch(direction){
             return false;
         }
         for(i = 0; i<Constant_Taken_Positions.length-4;i++){
-            if (C_Right(Constant_Taken_Positions[i][0],Constant_Taken_Positions[i][1],x,y)) {
+            if (C_Right([Constant_Taken_Positions[i][0],Constant_Taken_Positions[i][1],x,y])) {
                     return Constant_Taken_Positions[i];
             }
         }
         for(i in Obstacle_coords){
-            if (C_Right(Obstacle_coords[i][0],Obstacle_coords[i][1],x,y)){
+            if (C_Right([Obstacle_coords[i][0],Obstacle_coords[i][1],x,y])){
                     return false;
+            }
+        }
+        for(i in Gold_coords){
+            if (C_Right([Gold_coords[i][0],Gold_coords[i][1],x,y])){
+                if(!Player_Coords[color][2]){
+                    Gold_coords.splice(i,1);
+                    Player_Coords[color][2]=true;
+                }
+                else{
+                    return false;
+                }
             }
         }
         Player_Coords[color][0]+=4;

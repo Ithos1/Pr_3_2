@@ -3,6 +3,7 @@ var Coords;
 var socket;
 var Obstacles;
 var images;
+var Gold_Coords;
 
 function preload(){ 
 
@@ -84,6 +85,11 @@ function preload(){
     }
        
     socket.on("GetColor", GetColor);
+
+    function GetGold(data){
+        Gold_Coords=data;
+    }
+    socket.on("GetGoldCoords", GetGold);
 }
 
 function setup(){
@@ -112,7 +118,8 @@ function setup(){
         Blue_Truck_Up:loadImage(x+"player_blue_3.png"),
         Blue_Truck_Left:loadImage(x+"player_blue_4.png"),
         Blue_Truck_Down:loadImage(x+"player_blue_1.png"),
-        Blue_Truck_Right:loadImage(x+"player_blue_2.png")
+        Blue_Truck_Right:loadImage(x+"player_blue_2.png"),
+        Cargo_Gold:loadImage(x+"cargo_gold_2.png")
 
 
     };
@@ -128,11 +135,10 @@ function setup(){
 
 function draw(){
 
+    socket.emit("AskGold");
+    
     background(75,75,75);
-    rect(96,96,768,768);
-
-    
-    
+    rect(96,96,768,768);    
 
     for(var i = 0;i<24;i++){
         for(var j =0;j<24;j++){
@@ -149,12 +155,19 @@ function draw(){
 
 
 
-    for(var i in Obstacles){
+    for( i in Obstacles){
         image(images.Obstacle, Obstacles[i][0]+96,Obstacles[i][1]+96);
     }
 
-    for(var i in Coords){
+    for( i in Coords){
         image(images.Red_Truck_Left, Coords[i][0]+96, Coords[i][1]+96);
+        if(Coords[i][2]){
+            image(images.Cargo_Gold, Coords[i][0]+96, Coords[i][1]+84);
+        }
+    }
+
+    for( i in Gold_Coords){
+        image(images.Gold, Gold_Coords[i][0]+96, Gold_Coords[i][1]+96);
     }
     
 //Controls
