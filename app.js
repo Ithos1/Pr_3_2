@@ -66,12 +66,14 @@ var Gold_coords = [];
 var Max_Gold;
 var viewDistance;
 var side = 32;
+var Background;
 
 //Map-setup
 
 function Start(){
     Obstacle_amount = Random(10, 20);
     Max_Gold = Random(1,3);
+    Background = Random(1,4);
     while(Obstacle_amount){
         var x = Random(0,23)*side;
         var y = Random(0,23)*side;
@@ -79,10 +81,10 @@ function Start(){
         Obstacle_coords.push([x,y]);
         Obstacle_amount--;
     }
-    Player_Coords.blue = [64,64,false,0];
-    Player_Coords.red = [64, 672,false,0];
-    Player_Coords.yellow = [672,672,false,0];
-    Player_Coords.green = [672,64,false,0];
+    Player_Coords.blue = [64,64,false,0,10];
+    Player_Coords.red = [64, 672,false,0,10];
+    Player_Coords.yellow = [672,672,false,0,10];
+    Player_Coords.green = [672,64,false,0,10];
 
     setInterval(function(){ 
         if(Gold_coords.length<Max_Gold){
@@ -114,7 +116,7 @@ io.on('connection', function(socket){
     Start();
     io.sockets.emit("updatePlayerCoords", Player_Coords);
     io.sockets.emit("display message start", messages);
-    io.sockets.emit("ReceiveObstacles", Obstacle_coords);
+    io.sockets.emit("ReceiveObstacles", [Obstacle_coords, Background]);
     socket.on("send message", function (data, name){
         if(name){
             var mes = name + " : " + data;
@@ -135,9 +137,17 @@ io.on('connection', function(socket){
         else{
             Users.push(data);
             io.sockets.emit("Announce_Player", data);
-            var A = Random(colors);
-            Players[A] = data;
-            io.sockets.connected[socket.id].emit("GetColor", A);
+            while(true){
+                var A = Random(colors);
+                for(i in Players){
+                    if(Players[A]!=""){
+                        continue;
+                    }
+                }
+                Players[A] = data;
+                io.sockets.connected[socket.id].emit("GetColor", A);
+                break;
+            }
         }
     });
     socket.on("Move",function(data){
@@ -145,9 +155,9 @@ io.on('connection', function(socket){
         if(Array.isArray(New)){
             for(var i in Base_Coords[data[0]]){
                 if((Base_Coords[data[0]][i][0]==New[0]&&Base_Coords[data[0]][i][1]==New[1]) && Player_Coords[data[0]][2]){
-                    console.log("Yep");
                     Player_Coords[data[0]][3]++;
                     Player_Coords[data[0]][2]=false;
+                    io.sockets.emit("updatePlayerCoords", Player_Coords);
                     io.sockets.emit("AnnouncePoint",data[0]);
                 }
             }
