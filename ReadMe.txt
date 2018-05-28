@@ -1,0 +1,1 @@
+Type /Start in chat to start the game without waiting for other players.

@@ -4,8 +4,12 @@ var socket;
 var Obstacles;
 var images;
 var Gold_Coords;
+var Power_Coords;
 var Background;
 var Game_Has_Started = false;
+var Game_Over_ = false;
+var Winner_Color;
+var Winner;
 
 function preload() {
     socket = io.connect('http://localhost:3000');
@@ -89,15 +93,17 @@ function preload() {
 
     socket.on("GetColor", GetColor);
 
-    function GetGold(data) {
-        Gold_Coords = data;
+    function GetRes(data) {
+        Gold_Coords = data[0];
+        Power_Coords = data[1];
     }
-    socket.on("GetGoldCoords", GetGold);
+    socket.on("GetResCoords", GetRes);
 
     function AnnouncePoint(data) {
         var p = document.createElement('p');
         p.setAttribute("class", "message");
-        p.innerText = "<span style='color:"+data+">"+data + "</span> delievered the cargo and now has " + Players_info[data][3] + " points";
+        p.style.color = data;
+        p.innerText = data + " delievered the cargo and now has " + Players_info[data][3] + " points!";
         Server_chat.appendChild(p);
     }
 
@@ -107,11 +113,45 @@ function preload() {
         Game_Has_Started = true;
         var p = document.createElement('p');
         p.setAttribute("class", "message");
-        p.innerText = "You are <span style='color:"+Color+"'>"+Color+"</span>!";
+        p.style.color = Color;
+        p.innerText = "You are "+Color+"!";
         Server_chat.appendChild(p);
+        var m = document.createElement("p");
+        m.setAttribute("class","message");
+        m.innerText = "Use WASD or arrow keys to move around. After collecting gold you need to deliver it to your base. A player can only hold one unit of gold at a time.You need energy to move, if you're out of energy, stand still to replenish it. If you pick up a battery, you'll be able to move at no energy cost for 10 seconds. The game ends when a player collects 5 points.";
+        Server_chat.appendChild(m);
     }
 
     socket.on("Start",Start);
+
+    function Game_Over(Color){
+        Game_Over_=true;
+        Game_Has_Started=false;
+        switch(Color){
+            case "red":
+                Winner_Color=color(255,0,0);
+                Winner = "Red";
+
+                break;
+
+            case "yellow":
+                Winner_Color=color(255,255,0);
+                Winner = "Yellow";
+                break;
+            
+            case "green":
+                Winner_Color=color(0,255,0);
+                Winner = "Green";
+                break;
+            
+            case "blue":
+                Winner = "Blue";
+                Winner_Color=color(0,0,255);
+        }
+    }
+
+    socket.on("AnnounceWinner", Game_Over);
+
 }
 
 function setup() {
@@ -138,7 +178,8 @@ function setup() {
         blue_Truck_left: loadImage(x + "player_blue_4.png"),
         Cargo_Gold_left: loadImage(x + "cargo_gold_2.png"),
         Cargo_Gold_up: loadImage(x+ "cargo_gold_1.png"),
-        Power: loadImage(x+"power.png")
+        Power: loadImage(x+"power.png"),
+        PowerUp: loadImage(x+"upgrade_power.png")
 
 
     };
@@ -155,11 +196,11 @@ var temp;
 function draw() {
 
 
-    socket.emit("AskGold");
+    socket.emit("AskResources");
     background(75, 75, 75);
     rect(96, 96, 768, 768);
     
-    
+    //Power & Points
     
     if(Color){
         temp=Players_info[Color][4];
@@ -167,8 +208,20 @@ function draw() {
             image(images.Power, 108+i*48, 48);
         }
         image(images.Power, 108+i*48, 48, 32, 32);
+        textSize(8);
+        if(Players_info[Color][6]>0){
+            fill(255,255,0);
+            text(Players_info[Color][6], 108+i*48+80, 48);
+            image(images.PowerUp, 108+i*48+48, 48);
+        }
+        fill(255,255,255);
+        textSize(64);
+        textAlign(CENTER);
+        text(Players_info[Color][3], 480, 924);
     }
-    
+
+
+    //Background
 
     for (var i = 0; i < 24; i++) {
         for (var j = 0; j < 24; j++) {
@@ -177,6 +230,9 @@ function draw() {
             }
         }
     }
+
+    //Bases
+
     image(images.B_blue, 96, 96);
 
     image(images.B_red, 96, (96 + 736 - 32));
@@ -185,11 +241,13 @@ function draw() {
 
     image(images.B_yellow, 704 + 96, 704 + 96);
 
-
+    //Obstacles
 
     for (i in Obstacles) {
         image(images.Obstacle, Obstacles[i][0] + 96, Obstacles[i][1] + 96);
     }
+
+    //Players
 
     for (i in Players_info) {
         temp = i+"_Truck_"+Players_info[i][5];
@@ -204,12 +262,18 @@ function draw() {
             }
         }
     }
+
+    //Gold
     
     for (i in Gold_Coords) {
         image(images.Gold, Gold_Coords[i][0] + 96, Gold_Coords[i][1] + 96);
     }
 
-    
+    //PowerUp
+
+    for(var i in Power_Coords){
+        image(images.Power, Power_Coords[i][0] + 96, Power_Coords[i][1]+96);
+    }
 
     
     if(Game_Has_Started){
@@ -235,6 +299,15 @@ function draw() {
             socket.emit("Move", [Color, "idle"]);
         }
     }
+
+
+    if(Game_Over_){
+        fill(Winner_Color);
+        textAlign(CENTER);
+        textSize(96);
+        text(Winner+" Wins!",480,480);
+    }
+
 }
 
 

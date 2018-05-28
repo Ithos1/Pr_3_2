@@ -8,6 +8,7 @@ var C_Up = Functions.Collis_U;
 var C_Down = Functions.Collis_D;
 var C_Left = Functions.Collis_L;
 var C_Right = Functions.Collis_R;
+var Game = false;
 
 //Server variables
 var messages =[];
@@ -34,7 +35,7 @@ var Player_Info = {
 };
 var Constant_Taken_Positions = [
     [0,0],    [32,0],
-    [32,0],   [32,32],
+    [0,32],   [32,32],
     [0,704],   [32,704],
     [0,736],   [32,736],
     [704,704],  [736,704],
@@ -61,6 +62,7 @@ var Base_Coords = {
     ]
 };
 var Obstacle_coords = [];
+var Power_Coords = [];
 var Obstacle_amount;
 var Gold_coords = [];
 var Max_Gold;
@@ -74,6 +76,9 @@ function Start(){
     Obstacle_amount = Random(25, 50);
     Max_Gold = Random(1,3);
     Background = Random(1,4);
+    if(Background==5){
+        Background=1;
+    }
     while(Obstacle_amount){
         var x = Random(0,23)*side;
         var y = Random(0,23)*side;
@@ -81,10 +86,10 @@ function Start(){
         Obstacle_coords.push([x,y]);
         Obstacle_amount--;
     }
-    Player_Info.blue = [64,64,false,0,10,"left"];
-    Player_Info.red = [64, 672,false,0,10,"left"];
-    Player_Info.yellow = [672,672,false,0,10,"left"];
-    Player_Info.green = [672,64,false,0,10,"left"];
+    Player_Info.blue = [64,64,false,0,10,"left",0];
+    Player_Info.red = [64, 672,false,0,10,"left",0];
+    Player_Info.yellow = [672,672,false,0,10,"left",0];
+    Player_Info.green = [672,64,false,0,10,"left",0];
 
     setInterval(function(){ 
         if(Gold_coords.length<Max_Gold){
@@ -97,6 +102,27 @@ function Start(){
             }
         }
     }, 5000);
+
+    setInterval(function(){
+        if(Power_Coords.length<2){
+            while(true){
+                var x = Random(0,23)*side;
+                var y = Random(0,23)*side;
+                if(Check_if_Occupied(x,y)){continue;}
+                Power_Coords.push([x,y]);
+                break;
+            }
+        }
+    }, 15000);
+
+    setInterval(function(){
+        for (var i in Player_Info){
+            if(Player_Info[i][6]>0){
+                Player_Info[i][6]--;
+            }
+        }
+    },1000);
+
 }
 
 
@@ -118,7 +144,11 @@ io.on('connection', function(socket){
     io.sockets.emit("display message start", messages);
     io.sockets.emit("ReceiveObstacles", [Obstacle_coords, Background]);
     socket.on("send message", function (data, name){
-        if(name){
+        if(data == "/Start" && !Game){
+            Game = true;
+            io.sockets.emit("Start");
+        }
+        else if(name){
             var mes = name + " : " + data;
             messages.push(mes);
             io.sockets.emit("display message", mes);
@@ -144,6 +174,7 @@ io.on('connection', function(socket){
                 console.log(Players, colors);
             }
             if(Users.length==4){
+                Game = true;
                 io.sockets.emit("Start");
             }
         }
@@ -165,18 +196,23 @@ io.on('connection', function(socket){
                             Player_Info[data[0]][2]=false;
                             io.sockets.emit("updatePlayerCoords", Player_Info);
                             io.sockets.emit("AnnouncePoint",data[0]);
+                            if(Player_Info[data[0]][3]==5){
+                                io.sockets.emit("AnnounceWinner",data[0]);
+                            }
                         }
                     }
                 }
                 if(New===true){
-                    Player_Info[data[0]][4]-=0.05;
+                    if(Player_Info[data[0]][6]==0){
+                        Player_Info[data[0]][4]-=0.05;
+                    }
                     io.sockets.emit("updatePlayerCoords", Player_Info);
                 }
             }
         }
     });
-    socket.on("AskGold",function(){
-        io.sockets.emit("GetGoldCoords",Gold_coords);
+    socket.on("AskResources",function(){
+        io.sockets.emit("GetResCoords",[Gold_coords, Power_Coords]);
     });
     }
 );
@@ -218,6 +254,12 @@ switch(direction){
                 }
             }
         }
+        for(i in Power_Coords){
+            if(C_Up([Power_Coords[i][0],Power_Coords[i][1],x,y])){
+                Player_Info[color][6]+=10;
+                Power_Coords.splice(i,1);
+            }
+        }
         Player_Info[color][5]="up";
         Player_Info[color][1]-=4;
         break;  
@@ -249,6 +291,12 @@ switch(direction){
                 else{
                     return false;
                 }
+            }
+        }
+        for(i in Power_Coords){
+            if(C_Down([Power_Coords[i][0],Power_Coords[i][1],x,y])){
+                Player_Info[color][6]+=10;
+                Power_Coords.splice(i,1);
             }
         }
         Player_Info[color][5]="up";
@@ -284,6 +332,12 @@ switch(direction){
                 }
             }
         }
+        for(i in Power_Coords){
+            if(C_Left([Power_Coords[i][0],Power_Coords[i][1],x,y])){
+                Player_Info[color][6]+=10;
+                Power_Coords.splice(i,1);
+            }
+        }
         Player_Info[color][5]="left";
         Player_Info[color][0]-=4;
         
@@ -316,6 +370,12 @@ switch(direction){
                 else{
                     return false;
                 }
+            }
+        }
+        for(i in Power_Coords){
+            if(C_Right([Power_Coords[i][0],Power_Coords[i][1],x,y])){
+                Player_Info[color][6]+=10;
+                Power_Coords.splice(i,1);
             }
         }
         Player_Info[color][5]="left";
