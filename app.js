@@ -76,9 +76,7 @@ function Start(){
     Obstacle_amount = Random(25, 50);
     Max_Gold = Random(1,3);
     Background = Random(1,4);
-    if(Background==5){
-        Background=1;
-    }
+    console.log("This program was made by Vahan (Ithos) Tumasyan for TUMO : Programming 3 workshop.")
     while(Obstacle_amount){
         var x = Random(0,23)*side;
         var y = Random(0,23)*side;
@@ -144,7 +142,7 @@ io.on('connection', function(socket){
     io.sockets.emit("display message start", messages);
     io.sockets.emit("ReceiveObstacles", [Obstacle_coords, Background]);
     socket.on("send message", function (data, name){
-        if(data == "/Start" && !Game){
+        if(data.toLowerCase == "/start".toLowerCase && !Game){
             Game = true;
             io.sockets.emit("Start");
         }
@@ -256,7 +254,7 @@ switch(direction){
         }
         for(i in Power_Coords){
             if(C_Up([Power_Coords[i][0],Power_Coords[i][1],x,y])){
-                Player_Info[color][6]+=10;
+                Player_Info[color][6]+=5;
                 Power_Coords.splice(i,1);
             }
         }
@@ -295,7 +293,7 @@ switch(direction){
         }
         for(i in Power_Coords){
             if(C_Down([Power_Coords[i][0],Power_Coords[i][1],x,y])){
-                Player_Info[color][6]+=10;
+                Player_Info[color][6]+=5;
                 Power_Coords.splice(i,1);
             }
         }
@@ -334,7 +332,7 @@ switch(direction){
         }
         for(i in Power_Coords){
             if(C_Left([Power_Coords[i][0],Power_Coords[i][1],x,y])){
-                Player_Info[color][6]+=10;
+                Player_Info[color][6]+=5;
                 Power_Coords.splice(i,1);
             }
         }
@@ -374,7 +372,7 @@ switch(direction){
         }
         for(i in Power_Coords){
             if(C_Right([Power_Coords[i][0],Power_Coords[i][1],x,y])){
-                Player_Info[color][6]+=10;
+                Player_Info[color][6]+=5;
                 Power_Coords.splice(i,1);
             }
         }

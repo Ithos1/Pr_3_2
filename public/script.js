@@ -118,7 +118,7 @@ function preload() {
         Server_chat.appendChild(p);
         var m = document.createElement("p");
         m.setAttribute("class","message");
-        m.innerText = "Use WASD or arrow keys to move around. After collecting gold you need to deliver it to your base. A player can only hold one unit of gold at a time.You need energy to move, if you're out of energy, stand still to replenish it. If you pick up a battery, you'll be able to move at no energy cost for 10 seconds. The game ends when a player collects 5 points.";
+        m.innerText = "Use WASD or arrow keys to move around. After collecting gold you need to deliver it to your base. A player can only hold one unit of gold at a time.You need energy to move, if you're out of energy, stand still to replenish it. If you pick up a battery, you'll be able to move at no energy cost for 5 seconds. The game ends when a player collects 5 points.";
         Server_chat.appendChild(m);
     }
 
@@ -162,6 +162,7 @@ function setup() {
         bg_2: loadImage(x + "mars.png"),
         bg_3: loadImage(x + "moon.png"),
         bg_4: loadImage(x + "ice.png"),
+        bg_5: loadImage(x + "sand.png"),
         B_blue: loadImage(x + "camp_blue.png"),
         B_red: loadImage(x + "camp_red.png"),
         B_yellow: loadImage(x + "camp_yellow.png"),
