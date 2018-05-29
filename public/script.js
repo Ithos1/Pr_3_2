@@ -111,6 +111,7 @@ function preload() {
 
     function Start(){
         Game_Has_Started = true;
+        Game_Over_=false;
         var p = document.createElement('p');
         p.setAttribute("class", "message");
         p.style.color = Color;
@@ -151,6 +152,20 @@ function preload() {
     }
 
     socket.on("AnnounceWinner", Game_Over);
+
+
+    function Reset(data){
+        Game_Has_Started = false;
+        Game_Over_ = false;
+        for(var i in data){
+            if(data[i]==This_Player){
+                Color = i;
+                break;
+            }
+        }
+    }
+
+    socket.on("Reset", Reset);
 
 }
 

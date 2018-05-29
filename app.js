@@ -69,7 +69,7 @@ var Max_Gold;
 var viewDistance;
 var side = 32;
 var Background;
-
+var colors = [];
 //Map-setup
 
 function Start(){
@@ -88,7 +88,7 @@ function Start(){
     Player_Info.red = [64, 672,false,0,10,"left",0];
     Player_Info.yellow = [672,672,false,0,10,"left",0];
     Player_Info.green = [672,64,false,0,10,"left",0];
-
+    colors = ["blue","red","yellow","green"];
     setInterval(function(){ 
         if(Gold_coords.length<Max_Gold){
             while(true){
@@ -142,9 +142,29 @@ io.on('connection', function(socket){
     io.sockets.emit("display message start", messages);
     io.sockets.emit("ReceiveObstacles", [Obstacle_coords, Background]);
     socket.on("send message", function (data, name){
-        if(data.toLowerCase == "/start".toLowerCase && !Game){
+        if(data == "/Start" && !Game){
             Game = true;
             io.sockets.emit("Start");
+        }
+        else if(data == "/Reset" && !Game){
+            Obstacle_coords=[];
+            Gold_Coords=[];
+            Power_Coords=[];
+            Start();
+            io.sockets.emit("ReceiveObstacles", [Obstacle_coords, Background]);
+            var Players = {
+                blue:"",
+                red:"",
+                yellow:"",
+                green:""
+            };
+            for(var i in Users){
+                var A = Random(0, colors.length-1);
+                Players[colors[A]] = Users[i];   
+                colors.splice(A,1);
+            }
+            io.sockets.emit("Reset",Players);
+
         }
         else if(name){
             var mes = name + " : " + data;
@@ -196,6 +216,7 @@ io.on('connection', function(socket){
                             io.sockets.emit("AnnouncePoint",data[0]);
                             if(Player_Info[data[0]][3]==5){
                                 io.sockets.emit("AnnounceWinner",data[0]);
+                                Game = false;
                             }
                         }
                     }
