@@ -10,6 +10,7 @@ var Game_Has_Started = false;
 var Game_Over_ = false;
 var Winner_Color;
 var Winner;
+var laser_coords=[];
 
 function preload() {
     socket = io.connect('http://localhost:3000');
@@ -96,6 +97,7 @@ function preload() {
     function GetRes(data) {
         Gold_Coords = data[0];
         Power_Coords = data[1];
+        laser_coords = data[2];
     }
     socket.on("GetResCoords", GetRes);
 
@@ -103,7 +105,7 @@ function preload() {
         var p = document.createElement('p');
         p.setAttribute("class", "message");
         p.style.color = data;
-        p.innerText = data + " delievered the cargo and now has " + Players_info[data][3] + " points!";
+        p.innerText = data + " delievered the cargo and now has " + Players_info[data].points + " points!";
         Server_chat.appendChild(p);
     }
 
@@ -119,7 +121,7 @@ function preload() {
         Server_chat.appendChild(p);
         var m = document.createElement("p");
         m.setAttribute("class","message");
-        m.innerText = "Use WASD or arrow keys to move around. After collecting gold you need to deliver it to your base. A player can only hold one unit of gold at a time.You need energy to move, if you're out of energy, stand still to replenish it. If you pick up a battery, you'll be able to move at no energy cost for 5 seconds. The game ends when a player collects 5 points.";
+        m.innerText = "WASD or Arrow keys to move, Space to shoot. Collect 5 points to win. To get a point grab a piece of gold and deliver it to your base. If you get shot your energy will be depleted";
         Server_chat.appendChild(m);
     }
 
@@ -195,7 +197,11 @@ function setup() {
         Cargo_Gold_left: loadImage(x + "cargo_gold_2.png"),
         Cargo_Gold_up: loadImage(x+ "cargo_gold_1.png"),
         Power: loadImage(x+"power.png"),
-        PowerUp: loadImage(x+"upgrade_power.png")
+        PowerUp: loadImage(x+"upgrade_power.png"),
+        Laser_left: loadImage(x+"bullet1_1.png"),
+        Laser_right: loadImage(x+"bullet1_3.png"),
+        Laser_up: loadImage(x+"bullet1_2.png"),
+        Laser_down: loadImage(x+"bullet1_4.png")
 
 
     };
@@ -219,21 +225,21 @@ function draw() {
     //Power & Points
     
     if(Color){
-        temp=Players_info[Color][4];
+        temp=Players_info[Color].energy;
         for (var i = 0; i<temp;i++){
             image(images.Power, 108+i*48, 48);
         }
         image(images.Power, 108+i*48, 48, 32, 32);
         textSize(8);
-        if(Players_info[Color][6]>0){
+        if(Players_info[Color].boost>0){
             fill(255,255,0);
-            text(Players_info[Color][6], 108+i*48+80, 48);
+            text(Players_info[Color].boost, 108+i*48+80, 48);
             image(images.PowerUp, 108+i*48+48, 48);
         }
         fill(255,255,255);
         textSize(64);
         textAlign(CENTER);
-        text(Players_info[Color][3], 480, 924);
+        text(Players_info[Color].points, 480, 924);
     }
 
 
@@ -266,15 +272,15 @@ function draw() {
     //Players
 
     for (i in Players_info) {
-        temp = i+"_Truck_"+Players_info[i][5];
-        image(images[temp], Players_info[i][0] + 96, Players_info[i][1] + 96);
-        if (Players_info[i][2]) {
-            temp = "Cargo_Gold_"+Players_info[i][5];
-            if(Players_info[i][5]=="left"){
-            image(images[temp], Players_info[i][0] + 96, Players_info[i][1] + 84);
+        temp = i+"_Truck_"+Players_info[i].direction_draw;
+        image(images[temp], Players_info[i].x + 96, Players_info[i].y + 96);
+        if (Players_info[i].gold) {
+            temp = "Cargo_Gold_"+Players_info[i].direction_draw;
+            if(Players_info[i].direction_draw=="left"){
+            image(images[temp], Players_info[i].x + 96, Players_info[i].y + 84);
             }
             else{
-                image(images[temp], Players_info[i][0] + 84, Players_info[i][1] + 96);
+                image(images[temp], Players_info[i].x + 84, Players_info[i].y + 96);
             }
         }
     }
@@ -289,6 +295,13 @@ function draw() {
 
     for(var i in Power_Coords){
         image(images.Power, Power_Coords[i][0] + 96, Power_Coords[i][1]+96);
+    }
+
+    //Lasers
+    
+    for(var i in laser_coords){
+        temp = "Laser_"+laser_coords[i][2];
+        image(images[temp], laser_coords[i][0]+96,laser_coords[i][1]+96);
     }
 
     
@@ -309,6 +322,9 @@ function draw() {
 
             if (keyIsDown(DOWN_ARROW) || keyIsDown(83)) {
                 socket.emit("Move", [Color, "down"]);
+            }
+            if (keyIsDown(32)){
+                socket.emit("Shoot", Color);
             }
         }
         else{
