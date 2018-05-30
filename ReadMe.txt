@@ -1,10 +1,11 @@
 
 This is a "Game of Trucks" program for Programming 3, made by Vahan (Ithos) Tumasyan.
 
-Includes : 	Player and server chat,
+Includes : 	Server <-> User connection,
+		Player and server chat,
 		All collisions,
 		Functioning energy system,
-		Functioning point system /w alerts & winner announcments,
+		Functioning point system /w alerts & winner announcments
 
 Does not include :
 		Lasers
